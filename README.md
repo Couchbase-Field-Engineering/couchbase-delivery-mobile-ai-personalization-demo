@@ -20,7 +20,7 @@ Built on the framework of the [Couchbase ShopSmart demo](../couchbase-shopsmart-
 
 ## How the demo opens
 
-`http://<host>:8086/story` is **Delivery That Knows You. Even Offline.**, a seven-chapter story for the room before the live app. Use ←/→ to move between chapters, **N** for talking points and ☾ for dark mode:
+`https://<host>:5152/story` is **Delivery That Knows You. Even Offline.**, a seven-chapter story for the room before the live app. Use ←/→ to move between chapters, **N** for talking points and ☾ for dark mode:
 
 1. **A day in a customer's pocket.** Why customers are offline so often: subway tunnels, parking garages, lobbies and elevators, rural roads, airplane mode, basement apartments. It closes with Maya checking out a $512.90 cart between stations, with a price match that needs approval and a courier booked for her usual 5-7 pm window.
 2. **What the app needs.** Eight requirements: four for the phone, four for the AI and the data platform.
@@ -205,15 +205,23 @@ If the RAG application is created before the backend has published a guide, it i
 
 Configure an LLM provider key in AOM to get generated answers. Without one, AOM returns a labelled stub: the backend then writes the answer itself from the same retrieved context, and AOM still reports the LLM-cache status (hit or miss).
 
-Then open **http://localhost:8086/story** for the story that opens the demo, **http://localhost:8086** for the app in a browser, or **http://localhost:8205** for a page linking every service.
+Then open **https://localhost:5152/story** for the story that opens the demo, **https://localhost:5152** for the app in a browser, or **http://localhost:8205** for a page linking every service.
 
 | Port | Service |
 |---|---|
-| `8086` | **The app in a browser** (`web` service), shown inside a phone frame (add `?frame=0` for full width): same screens and documents, synced over REST instead of Couchbase Lite |
+| `5152` | **The app in a browser** over HTTPS, behind the sign-in page (`web` service), shown inside a phone frame (add `?frame=0` for full width): same screens and documents, synced over REST instead of Couchbase Lite |
 | `8205` | Backend API + MCP server (`/delivery/mcp`); `/` lists every link |
 | `4994` | Sync Gateway public, which is what phones replicate with: `ws://<host>:4994/delivery` |
 | `127.0.0.1:4995` | Sync Gateway admin |
 | `127.0.0.1:18096` | Couchbase Web Console (Administrator / password123) |
+
+**Sign-in and HTTPS.** The browser UI (the app, the story page and everything else the `web` container serves) is on **`https://<host>:5152`** and opens on a sign-in page:
+
+| Username | Password |
+|---|---|
+| `demo` | `Couchbase123!` |
+
+Change them with `DEMO_USERNAME` / `DEMO_PASSWORD` in `.env` (Compose) or `web.auth.username` / `web.auth.password` (Helm). The container serves a self-signed certificate it generates on first start, so the browser warns once; add the address people use to `TLS_HOSTS` (Compose) so it is in the certificate, or serve a real one by mounting `tls.crt` / `tls.key` at `/etc/nginx/tls` (Helm: `web.tls.secretName`). Plain `http://` on the same port redirects to HTTPS, and `/signout` ends the session. The sign-in covers the browser UI only: the backend API and Sync Gateway ports are unchanged.
 
 Ports are chosen so this stack runs alongside AOM (8090, 8091-8096), the NOV demo, the cruise demos (8081/8082, 8200/8201, 4984-4986), the field sales demo (8083, 8202, 4988) and the ShopSmart demo (8084, 8203, 4990). 8085 / 8204 / 4992 are left free for the field service demo; if that demo uses different ports, check it against the table above before running both.
 
@@ -274,8 +282,8 @@ It runs four steps:
 | URL on the node (192.168.111.4) | |
 |---|---|
 | `https://…:3111` | AOM dashboard (`admin` / `AOM_ADMIN_PASSWORD`) |
-| `http://…:8086/story` | The story: start here |
-| `http://…:8086` | The app |
+| `https://…:5152/story` | The story: start here |
+| `https://…:5152` | The app |
 | `http://…:8205/api/status` | Backend status, Databricks offload counters |
 | `ws://…:4994/delivery` | Sync Gateway for Couchbase Lite (point a device build's `EXPO_PUBLIC_SG_URL` here, and `EXPO_PUBLIC_API_URL` at `:8205`) |
 
@@ -390,7 +398,7 @@ databricks/         mock export generator, PySpark notebook, daily job
 couchbase-init/     bucket / scope / collections / indexes
 sync-gateway/       bootstrap + database config with per-collection sync functions
 scripts/            register_with_aom.py, setup-corporate-ca.sh
-web/                nginx image serving the browser build of the app on :8086 (proxies /api to the backend) and the story page
+web/                nginx image serving the browser build of the app over HTTPS on :5152, behind the sign-in page (proxies /api to the backend) and the story page
 helm/delivery-app/ Helm chart for the demo (Couchbase, Sync Gateway, backend, daily export CronJob, web)
 deploy/k8s/         deploy.sh + values for the K3s nodes (AOM and the demo)
 data/               the daily export drop folder
