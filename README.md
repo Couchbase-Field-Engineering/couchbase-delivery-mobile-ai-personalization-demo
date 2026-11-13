@@ -1,4 +1,5 @@
 # Couchbase Delivery · Mobile AI Personalization on Couchbase
+<img width="1280" height="900" alt="image" src="https://github.com/user-attachments/assets/3c2762a5-afda-433b-b5bd-0eeb2b0ba175" />
 
 A same-day delivery app for **Couchbase Delivery**, a fictional local delivery service: household essentials brought to the door by courier from a nearby hub, within the hour or in a two-hour window. Each customer's phone holds their profile, a smart cart built for them by a next-basket model, picks chosen for them, the delivery window they are usually home for, their drop-off instructions, the whole catalog and their home hub's delivery times in **Couchbase Lite** - so the app keeps working **in a subway tunnel with no signal**. Carts are priced on the phone, orders are captured offline with their window and drop-off instructions, and **sync back through Sync Gateway** the moment the customer has a connection. The courier, window and drop-off come back on the same order card.
 
