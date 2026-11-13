@@ -217,7 +217,7 @@ export default function Cart() {
               )}
               <Text style={styles.tiny}>
                 Priced on this phone from your {me.membership.tier_name} tier. Paying with {me.wallet.payment_method}. The order is saved in Couchbase Lite and sent
-                through Sync Gateway when you have a connection; Couchbase AOM runs it as a governed tool call.
+                through Sync Gateway when you have a connection; Couchbase Labs Agent Operations Manager runs it as a governed tool call.
               </Text>
             </Card>
           </>

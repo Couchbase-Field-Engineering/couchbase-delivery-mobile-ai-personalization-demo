@@ -5,13 +5,13 @@ A same-day delivery app for **Couchbase Delivery**, a fictional local delivery s
 
 The data comes from a **daily Databricks export** of the personalization model - and that is the only Databricks compute the app ever uses. Every profile read, recommendation, price quote and assistant answer during the day is served from Couchbase (or Couchbase Lite), never from a SQL warehouse or a Model Serving endpoint. The story page counts the warehouse queries that didn't run.
 
-The app's assistant is **registered with, and governed by, the Couchbase Agent Operations Manager (AOM)**:
+The app's assistant is **registered with, and governed by, the Couchbase Labs Agent Operations Manager**:
 
-* answers are grounded in AOM's **Knowledge Base** (the Delivery Guide and one profile document per customer)
-* it is registered as an AOM **RAG Application** (`delivery-assistant`), so its queries, cache hits and cost savings show on AOM's *RAG Applications* page
-* the context it builds for each personal question is cached in AOM's **Context Cache** and in Couchbase, which syncs it to the phone
-* LLM calls go through AOM's **LLM Caching** gateway
-* every order, price match, subscription, return, goodwill credit and preference change runs as an RBAC-checked, traced and audited AOM tool call, with human approval for price matches and goodwill credits
+* answers are grounded in Couchbase Labs Agent Operations Manager's **Knowledge Base** (the Delivery Guide and one profile document per customer)
+* it is registered as a Couchbase Labs Agent Operations Manager **RAG Application** (`delivery-assistant`), so its queries, cache hits and cost savings show on Couchbase Labs Agent Operations Manager's *RAG Applications* page
+* the context it builds for each personal question is cached in Couchbase Labs Agent Operations Manager's **Context Cache** and in Couchbase, which syncs it to the phone
+* LLM calls go through Couchbase Labs Agent Operations Manager's **LLM Caching** gateway
+* every order, price match, subscription, return, goodwill credit and preference change runs as an RBAC-checked, traced and audited Couchbase Labs Agent Operations Manager tool call, with human approval for price matches and goodwill credits
 
 ---
 
@@ -23,11 +23,11 @@ The app's assistant is **registered with, and governed by, the Couchbase Agent O
 2. **What the app needs.** Eight requirements: four for the phone, four for the AI and the data platform.
 3. **The Databricks bill.** The per-request design (a warehouse query per screen, a Model Serving call per session) next to the nightly-export design. Press **Transform the stack**, or **T**, and watch "warehouse queries per day" go from 4,800,000 to 1.
 4. **Offline-first, step by step.** The same cart in two phones, one with Couchbase Lite and one online-only. Press **Next step**, or Space.
-5. **One data plane for the AI.** Databricks to Couchbase to the AOM Knowledge Base, RAG app and caches, and on to the phone - with live numbers from the running backend: warehouse queries avoided, estimated Databricks spend avoided, Context Cache and LLM cache hit rates, orders captured offline.
+5. **One data plane for the AI.** Databricks to Couchbase to the Couchbase Labs Agent Operations Manager Knowledge Base, RAG app and caches, and on to the phone - with live numbers from the running backend: warehouse queries avoided, estimated Databricks spend avoided, Context Cache and LLM cache hit rates, orders captured offline.
 6. **Where the Databricks money goes.** Per-request serving vs. nightly export + Couchbase, line by line.
-7. **See it run.** Links to the app and the AOM dashboard, plus a ten-minute demo script.
+7. **See it run.** Links to the app and the Couchbase Labs Agent Operations Manager dashboard, plus a ten-minute demo script.
 
-The phone frame's side panel links back to the story. The page is served by the `web` container (`web/story.html`). Its live numbers come from `/api/status`, whose `metrics` include the Databricks offload counters (`warehouse_queries_avoided`, `model_serving_calls_avoided`, `estimated_dbx_spend_avoided_usd` at `DBX_COST_PER_QUERY_USD` per call - set it to the customer's real figure). The AOM link uses `AOM_DASHBOARD_URL`.
+The phone frame's side panel links back to the story. The page is served by the `web` container (`web/story.html`). Its live numbers come from `/api/status`, whose `metrics` include the Databricks offload counters (`warehouse_queries_avoided`, `model_serving_calls_avoided`, `estimated_dbx_spend_avoided_usd` at `DBX_COST_PER_QUERY_USD` per call - set it to the customer's real figure). The Couchbase Labs Agent Operations Manager link uses `AOM_DASHBOARD_URL`.
 
 ## What the demo shows
 
@@ -38,34 +38,34 @@ The phone frame's side panel links back to the story. The page is served by the 
 | **Personalization the customer controls** | *My preferences* marks categories "more of" or "hidden", and sets the default delivery option, the delivery window and the **drop-off instructions** the courier sees. It is saved offline like an order; when it syncs, the backend re-ranks the picks at once and the next order carries the new window and instructions - no waiting for tomorrow's model run. |
 | **Delivery, on the order card** | A placed order comes back with a `delivery` plan: the hub it leaves from, the courier and vehicle, the window ("In about 48 min" for Express, "Today, 5-7 pm" for Same-day, "Tomorrow, 5-7 pm" for Scheduled, or when it is ready for Hub pickup) and the drop-off instructions. The Orders tab and the confirmation screen render it from the order document in Couchbase Lite, so it is readable with no signal. The stage on the plan is `packing` when the order confirms; this demo does not simulate the courier moving. |
 | **Couchbase Lite: offline and online** | Tap the initials on Home and turn on *No signal* to pause replication. You can still browse, open any product, price a cart, check out (saved as an `orders` document marked **On device**), and ask the assistant. Switch it off: the order syncs and comes back **Confirmed** (or **Partial delivery** with a backorder ETA), with the courier and window on the card. |
-| **Price match with human approval** | The export carries a competitor price watch. When a cart holds an item a competitor is beating, checkout offers a price match. It runs as `request_price_match`, which AOM holds as **Awaiting Customer Care** until someone approves it on AOM's Approvals page; then the item is re-priced, the order is placed, and the customer's wallet, history and recommendations update on the phone. |
+| **Price match with human approval** | The export carries a competitor price watch. When a cart holds an item a competitor is beating, checkout offers a price match. It runs as `request_price_match`, which Couchbase Labs Agent Operations Manager holds as **Awaiting Customer Care** until someone approves it on Couchbase Labs Agent Operations Manager's Approvals page; then the item is re-priced, the order is placed, and the customer's wallet, history and recommendations update on the phone. |
 | **Business rules as governed refusals** | The Nova X console is limited to one per household every 30 days. The cart warns about it on the phone; an order that goes ahead anyway is refused with `reason_code: purchase_limit`, and the assistant explains the rule with the customer's own purchase date. |
 | **Databricks offload** | `/api/status → metrics` counts every profile, recommendation set, price quote and assistant context served from Couchbase instead of a warehouse query or a Model Serving call, and turns it into dollars. Chapter 5 of the story shows it live. |
-| **Registered with AOM** | `scripts/register_with_aom.py` (or `AOM_AUTO_REGISTER` in Kubernetes) sets up the **Delivery Assistant** agent identity (role `sales_agent`, scoped to 10 tools), the **`delivery-orders`** MCP server, the approval tier for price matches and goodwill credits, and the **`delivery-assistant` RAG Application**. |
-| **AOM RAG Application** | Policy questions ("How does a price match work?") go to `POST /v1/agent/rag/delivery-assistant/query`. AOM retrieves behind its Context Cache, generates behind its LLM Cache, and counts the query on the *RAG Applications* page. The app is scoped to the one *Delivery Guide* document, so a generic question can never retrieve another customer's profile. |
+| **Registered with Couchbase Labs Agent Operations Manager** | `scripts/register_with_aom.py` (or `AOM_AUTO_REGISTER` in Kubernetes) sets up the **Delivery Assistant** agent identity (role `sales_agent`, scoped to 10 tools), the **`delivery-orders`** MCP server, the approval tier for price matches and goodwill credits, and the **`delivery-assistant` RAG Application**. |
+| **Couchbase Labs Agent Operations Manager RAG Application** | Policy questions ("How does a price match work?") go to `POST /v1/agent/rag/delivery-assistant/query`. Couchbase Labs Agent Operations Manager retrieves behind its Context Cache, generates behind its LLM Cache, and counts the query on the *RAG Applications* page. The app is scoped to the one *Delivery Guide* document, so a generic question can never retrieve another customer's profile. |
 | **Knowledge Base fed by the daily export** | The loader publishes the *Delivery Guide* plus one *Customer profile* document per recently active customer. The assistant always searches with a `document_id` filter, so a personal question can only be grounded in **that** customer's profile. |
-| **Context Caching** | For personal questions the assistant assembles context (the customer's KB profile chunks, guide chunks and live tool facts: smart cart, member prices, wallet) and caches it in **AOM's Context Cache** (namespace `rag:delivery-assistant:customer-context`, key `<customer>:<intent>:<export_date>:r<customer rev>`). The next question is a `/v1/context/get` hit. The next export or any order changes the key, so the entry is never served stale. The same context is written to Couchbase as `ctx::<customer>::<intent>`, which syncs to that customer's phone; that copy is what the offline assistant answers from. Items a question names ("how much is the yoga mat?") are looked up live each turn, so a cached context never answers with another product. |
-| **LLM Caching** | Guide questions contain no customer data, so the second customer to ask the same question gets `LLM cache · exact hit`. Personal questions go through `/v1/llm/complete` in the `rag:delivery-assistant:customer` namespace, which AOM also attributes to the RAG application. |
-| **Governed actions** | `place_order`, `request_price_match`, `set_subscription`, `create_return`, `update_preferences` and `issue_goodwill_credit` all run as `POST /v1/tools/invoke`. AOM re-checks RBAC and the agent's tool scope, traces and audits the call, scans the response, and holds price matches and goodwill credits for a person to approve. |
+| **Context Caching** | For personal questions the assistant assembles context (the customer's KB profile chunks, guide chunks and live tool facts: smart cart, member prices, wallet) and caches it in **Couchbase Labs Agent Operations Manager's Context Cache** (namespace `rag:delivery-assistant:customer-context`, key `<customer>:<intent>:<export_date>:r<customer rev>`). The next question is a `/v1/context/get` hit. The next export or any order changes the key, so the entry is never served stale. The same context is written to Couchbase as `ctx::<customer>::<intent>`, which syncs to that customer's phone; that copy is what the offline assistant answers from. Items a question names ("how much is the yoga mat?") are looked up live each turn, so a cached context never answers with another product. |
+| **LLM Caching** | Guide questions contain no customer data, so the second customer to ask the same question gets `LLM cache · exact hit`. Personal questions go through `/v1/llm/complete` in the `rag:delivery-assistant:customer` namespace, which Couchbase Labs Agent Operations Manager also attributes to the RAG application. |
+| **Governed actions** | `place_order`, `request_price_match`, `set_subscription`, `create_return`, `update_preferences` and `issue_goodwill_credit` all run as `POST /v1/tools/invoke`. Couchbase Labs Agent Operations Manager re-checks RBAC and the agent's tool scope, traces and audits the call, scans the response, and holds price matches and goodwill credits for a person to approve. |
 
 ---
 
 ## Architecture
 
-![Architecture: Databricks export, customer's phone with Couchbase Lite, demo stack (backend, Couchbase Server, Sync Gateway) and the Agent Operations Manager](docs/images/architecture.svg)
+![Architecture: Databricks export, customer's phone with Couchbase Lite, demo stack (backend, Couchbase Server, Sync Gateway) and the Couchbase Labs Agent Operations Manager](docs/images/architecture.svg)
 
 | # | Flow |
 |---|---|
 | **1** | Every morning the Databricks job drops a `dt=YYYY-MM-DD` JSON Lines partition, and the loader picks up the newest one with a `_SUCCESS` marker. Databricks is done for the day. |
 | **2** | The loader upserts every customer, builds the recommendations for every recently active customer, and publishes the catalog and one document per delivery hub in Couchbase Server. The assistant reads and writes its **context cache** there, the worker reads pending orders, and the MCP tools apply orders, wallet changes and preferences. |
-| **3** | The loader replaces the AOM **Knowledge Base** documents (the Delivery Guide and one profile per recently active customer), then re-scopes the **RAG Application** to the new guide. |
+| **3** | The loader replaces the Couchbase Labs Agent Operations Manager **Knowledge Base** documents (the Delivery Guide and one profile per recently active customer), then re-scopes the **RAG Application** to the new guide. |
 | **4** | Sign-in: the backend creates the customer's Sync Gateway user (channels `customer:<id>`, `hub:<home hub>`, `catalog`) and mints a session. The assistant is called over `/api`. |
 | **5** | **Couchbase Lite** replicates continuously with Sync Gateway. Every screen renders from the phone, and orders become `orders` documents saved locally, even offline. |
-| **6** | Guide questions go to the assistant's **RAG Application** in one call. Personal questions check AOM's **Context Cache**; on a miss the assistant does document-scoped **KB retrieval**, stores the context in AOM and Couchbase, recalls **memory**, then calls the **LLM Caching** gateway. |
-| **7** | AOM calls the LLM provider only on a cache miss. |
+| **6** | Guide questions go to the assistant's **RAG Application** in one call. Personal questions check Couchbase Labs Agent Operations Manager's **Context Cache**; on a miss the assistant does document-scoped **KB retrieval**, stores the context in Couchbase Labs Agent Operations Manager and Couchbase, recalls **memory**, then calls the **LLM Caching** gateway. |
+| **7** | Couchbase Labs Agent Operations Manager calls the LLM provider only on a cache miss. |
 | **8** | Sync Gateway carries orders up and results back down: the phone pushes its pending order, and the confirmation, backorders, updated wallet and re-ranked recommendations come back. |
 | **9** | The worker runs each order as the **Delivery Assistant** agent through `POST /v1/tools/invoke`, so RBAC, tool scope, the approval tier, a trace and an audit entry are applied. |
-| **10** | AOM calls the `delivery-orders` MCP server, which allocates fulfillment-center inventory, posts the order to the customer's history and wallet and re-ranks their recommendations in Couchbase, and that syncs back to the phone (2 → 8 → 5). |
+| **10** | Couchbase Labs Agent Operations Manager calls the `delivery-orders` MCP server, which allocates fulfillment-center inventory, posts the order to the customer's history and wallet and re-ranks their recommendations in Couchbase, and that syncs back to the phone (2 → 8 → 5). |
 
 ### A customer's workflow, end to end
 
@@ -79,7 +79,7 @@ sequenceDiagram
   participant SG as Sync Gateway
   participant BE as Backend
   participant CB as Couchbase Server
-  participant AOM as Agent Ops Manager
+  participant AOM as Couchbase Labs Agent Operations Manager
   participant MCP as delivery-orders MCP
 
   M->>App: Sign in (member 204817, Chen)
@@ -125,7 +125,7 @@ sequenceDiagram
   participant DROP as data/databricks-dump
   participant L as Backend loader
   participant CB as Couchbase Server
-  participant AOM as AOM Knowledge Base
+  participant AOM as Couchbase Labs Agent Operations Manager Knowledge Base
   participant SG as Sync Gateway → phones
 
   DBX->>DROP: dt=2026-11-13/part-0000[0-3].json + _SUCCESS + _manifest.json
@@ -147,10 +147,10 @@ stateDiagram-v2
   [*] --> OnDevice: tap Place order (Couchbase Lite)
   OnDevice --> pending: replicator pushes (connectivity)
   pending --> processing: worker claims it
-  processing --> confirmed: AOM tools/invoke OK, everything in stock
+  processing --> confirmed: Couchbase Labs Agent Operations Manager tools/invoke OK, everything in stock
   processing --> partially_shipped: some items backordered (ETA on the card)
-  processing --> awaiting_approval: AOM 202 (price match, goodwill credit)
-  awaiting_approval --> confirmed: Customer Care approves in AOM
+  processing --> awaiting_approval: Couchbase Labs Agent Operations Manager 202 (price match, goodwill credit)
+  awaiting_approval --> confirmed: Customer Care approves in Couchbase Labs Agent Operations Manager
   awaiting_approval --> failed: denied / expired
   processing --> failed: business rule (purchase limit, unknown SKU…)
   failed --> OnDevice: "Order the rest without it" on the card
@@ -162,7 +162,7 @@ stateDiagram-v2
 
 ## Quick start
 
-### 1. Browser preview in about 2 minutes (no Docker, no AOM)
+### 1. Browser preview in about 2 minutes (no Docker, no Couchbase Labs Agent Operations Manager)
 
 The backend can run on an in-memory store, and the app has a browser preview engine that syncs the same documents over REST. Use this to look at the UX. Couchbase Lite needs a device build (step 3).
 
@@ -174,9 +174,9 @@ uvicorn app.main:app --port 8200                    # STORE_DRIVER=memory by def
 cd mobile && cp .env.example .env && sed -i '' 's/8205/8200/' .env && npm install && npx expo start --web
 ```
 
-### 2. Full stack: Couchbase, Sync Gateway and AOM
+### 2. Full stack: Couchbase, Sync Gateway and Couchbase Labs Agent Operations Manager
 
-You need Docker Desktop, and the [Couchbase Agent Operations Manager](https://github.com/erikhinderer/couchbase-agent-operations-manager) running on the same machine at `https://localhost:8090`, with its admin password set.
+You need Docker Desktop, and the [Couchbase Labs Agent Operations Manager](https://github.com/erikhinderer/couchbase-agent-operations-manager) running on the same machine at `https://localhost:8090`, with its admin password set.
 
 ```bash
 cp .env.example .env
@@ -185,11 +185,11 @@ python3 databricks/generate_mock_dump.py   # today's export → data/databricks-
 docker compose up -d --build               # couchbase, init, sync-gateway, sg-init, backend, web
 docker compose logs -f backend             # wait for "Loaded export <date>: … customers"
 
-python3 scripts/register_with_aom.py --admin-password '<AOM admin password>'
+python3 scripts/register_with_aom.py --admin-password '<Couchbase Labs Agent Operations Manager admin password>'
 docker compose up -d --build backend       # picks up AOM_* from .env, publishes the KB, scopes the RAG app
 ```
 
-`register_with_aom.py` is idempotent. Run it again with `--rotate` to issue a new agent key. After it runs, AOM shows:
+`register_with_aom.py` is idempotent. Run it again with `--rotate` to issue a new agent key. After it runs, Couchbase Labs Agent Operations Manager shows:
 
 * **Agents**: *Delivery Assistant*, role `sales_agent`, scoped to the 10 `delivery-orders::*` tools
 * **Servers / Catalog**: `delivery-orders` (trusted) and its tools
@@ -200,7 +200,7 @@ docker compose up -d --build backend       # picks up AOM_* from .env, publishes
 
 If the RAG application is created before the backend has published a guide, it is registered **disabled**. The backend enables it and sets its document scope on its next load. `GET http://localhost:8205/api/status` shows its state under `aom.rag_app`.
 
-Configure an LLM provider key in AOM to get generated answers. Without one, AOM returns a labelled stub: the backend then writes the answer itself from the same retrieved context, and AOM still reports the LLM-cache status (hit or miss).
+Configure an LLM provider key in Couchbase Labs Agent Operations Manager to get generated answers. Without one, Couchbase Labs Agent Operations Manager returns a labelled stub: the backend then writes the answer itself from the same retrieved context, and Couchbase Labs Agent Operations Manager still reports the LLM-cache status (hit or miss).
 
 Then open **https://localhost:5152/story** for the story that opens the demo, **https://localhost:5152** for the app in a browser, or **http://localhost:8205** for a page linking every service.
 
@@ -220,7 +220,7 @@ Then open **https://localhost:5152/story** for the story that opens the demo, **
 
 Change them with `DEMO_USERNAME` / `DEMO_PASSWORD` in `.env` (Compose) or `web.auth.username` / `web.auth.password` (Helm). The container serves a self-signed certificate it generates on first start, so the browser warns once; add the address people use to `TLS_HOSTS` (Compose) so it is in the certificate, or serve a real one by mounting `tls.crt` / `tls.key` at `/etc/nginx/tls` (Helm: `web.tls.secretName`). Plain `http://` on the same port redirects to HTTPS, and `/signout` ends the session. The sign-in covers the browser UI only: the backend API and Sync Gateway ports are unchanged.
 
-Ports are chosen so this stack runs alongside AOM (8090, 8091-8096), the NOV demo, the cruise demos (8081/8082, 8200/8201, 4984-4986), the field sales demo (8083, 8202, 4988) and the ShopSmart demo (8084, 8203, 4990). 8085 / 8204 / 4992 are left free for the field service demo; if that demo uses different ports, check it against the table above before running both.
+Ports are chosen so this stack runs alongside Couchbase Labs Agent Operations Manager (8090, 8091-8096), the NOV demo, the cruise demos (8081/8082, 8200/8201, 4984-4986), the field sales demo (8083, 8202, 4988) and the ShopSmart demo (8084, 8203, 4990). 8085 / 8204 / 4992 are left free for the field service demo; if that demo uses different ports, check it against the table above before running both.
 
 ### 3. The app on a device with Couchbase Lite
 
@@ -240,45 +240,45 @@ With `EXPO_PUBLIC_DB_ENGINE=auto`, the app uses Couchbase Lite whenever the nati
 
 ### 4. Kubernetes with Helm (K3s / Rancher)
 
-`deploy/k8s/deploy.sh` deploys AOM (**agent-ops**) and this demo (**delivery-app**) onto a single-node K3s cluster, such as one managed by Rancher, without a container registry. Run it from your Mac, in this repository:
+`deploy/k8s/deploy.sh` deploys Couchbase Labs Agent Operations Manager (**agent-ops**) and this demo (**delivery-app**) onto a single-node K3s cluster, such as one managed by Rancher, without a container registry. Run it from your Mac, in this repository:
 
 ```bash
 AOM_ADMIN_PASSWORD='<12+ characters>' ./deploy/k8s/deploy.sh      # MOTHER=ehind@192.168.111.4 by default
-# mother already runs AOM and the other demos: add this one next to them
-AOM_ADMIN_PASSWORD='<current AOM password>' ONLY=delivery ./deploy/k8s/deploy.sh
+# mother already runs Couchbase Labs Agent Operations Manager and the other demos: add this one next to them
+AOM_ADMIN_PASSWORD='<current Couchbase Labs Agent Operations Manager password>' ONLY=delivery ./deploy/k8s/deploy.sh
 ```
 
-To deploy on **hal** (192.168.111.5), where AOM already runs in `agent-ops`:
+To deploy on **hal** (192.168.111.5), where Couchbase Labs Agent Operations Manager already runs in `agent-ops`:
 
 ```bash
-AOM_ADMIN_PASSWORD='<current AOM password on hal>' TARGET=hal ONLY=delivery ./deploy/k8s/deploy.sh
+AOM_ADMIN_PASSWORD='<current Couchbase Labs Agent Operations Manager password on hal>' TARGET=hal ONLY=delivery ./deploy/k8s/deploy.sh
 ```
 
-`TARGET` picks the ssh host and the values file (`deploy/k8s/values-hal.yaml`); `MOTHER=` and `VALUES=` override either. `deploy/k8s/values-mother.yaml` publishes this demo on **8086 / 8205 / 4994** so it can run alongside `royal-app` (8081 / 8200 / 4984), `princess-app` (8082 / 8201 / 4986) the ShopSmart demo (8084 / 8203 / 4990) and the field sales demo (8083 / 8202 / 4988). They all register with the same AOM under different ids, so they show up side by side on AOM's Agents, Servers and RAG Applications pages.
+`TARGET` picks the ssh host and the values file (`deploy/k8s/values-hal.yaml`); `MOTHER=` and `VALUES=` override either. `deploy/k8s/values-mother.yaml` publishes this demo on **8086 / 8205 / 4994** so it can run alongside `royal-app` (8081 / 8200 / 4984), `princess-app` (8082 / 8201 / 4986) the ShopSmart demo (8084 / 8203 / 4990) and the field sales demo (8083 / 8202 / 4988). They all register with the same Couchbase Labs Agent Operations Manager under different ids, so they show up side by side on Couchbase Labs Agent Operations Manager's Agents, Servers and RAG Applications pages.
 
 It runs four steps:
 
-1. **Build.** It builds the three AOM images from `AOM_DIR` (default `~/github-couchbaselabs/couchbase-agent-operations-manager`) and this demo's `delivery-backend` and `delivery-web` images, for the node's CPU architecture.
+1. **Build.** It builds the three Couchbase Labs Agent Operations Manager images from `AOM_DIR` (default `~/github-couchbaselabs/couchbase-agent-operations-manager`) and this demo's `delivery-backend` and `delivery-web` images, for the node's CPU architecture.
 2. **Import.** It copies the images over SSH and imports them into K3s's containerd. This asks for your sudo password on the node once.
 3. **Install.** It runs `helm upgrade --install` on the node for both charts, and installs helm into `~/.local/bin` there if it's missing:
-   * `aom` in namespace `agent-ops`, from AOM's own chart with `values-k3s.yaml`
+   * `aom` in namespace `agent-ops`, from Couchbase Labs Agent Operations Manager's own chart with `values-k3s.yaml`
    * `delivery-app` in namespace `delivery-app`, from [`helm/delivery-app`](helm/delivery-app) with [`deploy/k8s/values-mother.yaml`](deploy/k8s/values-mother.yaml)
-4. **Secrets.** The AOM admin password and any `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` go into mode-600 values files on the node, never onto a command line.
+4. **Secrets.** The Couchbase Labs Agent Operations Manager admin password and any `ANTHROPIC_API_KEY` / `OPENAI_API_KEY` / `GEMINI_API_KEY` go into mode-600 values files on the node, never onto a command line.
 
 | Resource in `delivery-app` | What it does |
 |---|---|
 | `couchbase` StatefulSet + `couchbase-init` hook Job | Couchbase Server EE 8.0.2. The Job runs the same `init.sh` as Compose |
 | `sync-gateway` + `sg-init` hook Job | Sync Gateway 4.0.4. `sync-gateway-public` exposes the replication port for Couchbase Lite |
-| `backend` | Loads the export into Couchbase and serves the MCP server. Self-registers with AOM (`AOM_AUTO_REGISTER`) |
+| `backend` | Loads the export into Couchbase and serves the MCP server. Self-registers with Couchbase Labs Agent Operations Manager (`AOM_AUTO_REGISTER`) |
 | `databricks-dump` PVC | Holds the export. The backend's init container exports today's 100 MiB partition on first start |
 | `databricks-daily-export` CronJob | 04:30 America/New_York: exports a new partition and keeps the newest 2. The backend picks it up within 5 minutes |
 | `web` | The phone-framed app. nginx proxies `/api` to the backend, so the browser needs only one URL |
 
-**Self-registration.** No register script is needed in the cluster. With `AOM_AUTO_REGISTER=true`, the backend signs in to AOM (setting `AOM_ADMIN_PASSWORD` as the first-login password on a fresh AOM), registers `delivery-orders` at `http://backend.delivery-app.svc.cluster.local:8200/delivery/mcp`, issues the *Delivery Assistant* agent and keeps its key in Couchbase, turns on the approval tier, and publishes the Knowledge Base and the RAG application. Progress is in `/api/status` under `aom.registration`.
+**Self-registration.** No register script is needed in the cluster. With `AOM_AUTO_REGISTER=true`, the backend signs in to Couchbase Labs Agent Operations Manager (setting `AOM_ADMIN_PASSWORD` as the first-login password on a fresh Couchbase Labs Agent Operations Manager), registers `delivery-orders` at `http://backend.delivery-app.svc.cluster.local:8200/delivery/mcp`, issues the *Delivery Assistant* agent and keeps its key in Couchbase, turns on the approval tier, and publishes the Knowledge Base and the RAG application. Progress is in `/api/status` under `aom.registration`.
 
 | URL on the node (192.168.111.4) | |
 |---|---|
-| `https://…:3111` | AOM dashboard (`admin` / `AOM_ADMIN_PASSWORD`) |
+| `https://…:3111` | Couchbase Labs Agent Operations Manager dashboard (`admin` / `AOM_ADMIN_PASSWORD`) |
 | `https://…:5152/story` | The story: start here |
 | `https://…:5152` | The app |
 | `http://…:8205/api/status` | Backend status, Databricks offload counters |
@@ -291,7 +291,7 @@ It runs four steps:
 1. **Maya Chen** (member **204817** / **Chen**, Salem MA, Plus)
    * *Home*: "Good morning, Maya", Plus member, $12.50 store credit, 1,840 points, and her delivery line: Same-day delivery from Salem Hub, usual window 5-7 pm, "Leave at the side door". Her cart is already filled from the model: 8 items, **$270.41**. *For you today*: diapers, coffee pods and paper towels are about to run out; only 1 box of coffee pods is left at the Northeast fulfillment center; Brightway Market has the stand mixer for $239.99. Point out the footnote: model version and export date, all from Couchbase Lite.
    * Tap her initials → *No signal* **on**. *Shop* → search "mixer" → open it: $265.99 at Plus (list $279.99), 63 on hand, Express from the Salem Hub in about 48 minutes or today in her usual 5-7 pm window, "Viewed 4 times this month · 93% confidence". **Add to cart** → *Cart*: 9 items, the price-match switch is on, **$512.90** after the match, tax and store credit, computed on the phone. The Delivery section shows "Today, 5-7 pm (your usual window)" and her drop-off instructions. **Place order with price match** → **On device**. Ask the assistant "What am I running low on?" → **Answered on device · Couchbase Lite**.
-   * Switch *No signal* **off**: the order syncs, AOM holds it → **Awaiting Customer Care**. Approve it in AOM → *Approvals*; the card flips to **Partial delivery** (one box of coffee pods is backordered - the ETA is on the card) and shows the delivery plan: "Today, 5-7 pm", the courier and vehicle leaving the Salem Hub, and "Drop-off: Leave at the side door". Her store credit drops to $0 and her points go up by 988, and Home no longer lists what was just ordered. In AOM, show the trace and audit entry for `delivery-orders::request_price_match`.
+   * Switch *No signal* **off**: the order syncs, Couchbase Labs Agent Operations Manager holds it → **Awaiting Customer Care**. Approve it in Couchbase Labs Agent Operations Manager → *Approvals*; the card flips to **Partial delivery** (one box of coffee pods is backordered - the ETA is on the card) and shows the delivery plan: "Today, 5-7 pm", the courier and vehicle leaving the Salem Hub, and "Drop-off: Leave at the side door". Her store credit drops to $0 and her points go up by 988, and Home no longer lists what was just ordered. In Couchbase Labs Agent Operations Manager, show the trace and audit entry for `delivery-orders::request_price_match`.
    * Ask "How does a price match work?" twice: `Context cache · hit` and `LLM cache · exact hit`. Open **sources**: the Delivery Guide. Ask "Where is my last order?" for the status, the window, the courier and the backorder ETA. Ask "What are my drop-off instructions?" for a personal delivery answer.
 2. **Devon Walker** (**318552** / **Walker**, Rhinebeck NY, Member): asks the same price-match question and gets an **LLM cache exact hit** from Maya's turn, because the guide namespace is shared and has no customer data. His smart cart is $189.60 and leads with dog food, which is out of stock at the Hudson Valley fulfillment center: place the order → **Partial delivery**, both bags backordered. His default is Scheduled delivery, so the card says "Tomorrow, 12-2 pm" with "Back porch, not the front steps". Open the dog food and put it on **Subscribe & Save**; it leaves the smart cart.
 3. **Sofia Alvarez** (**427190** / **Alvarez**, Plano TX, Premier): *Shop* → "console" → add the Nova X. The product page and the cart warn that her household bought one six days ago. **Place the order anyway** → refused with `purchase_limit`; **Order the rest without it** places the remainder. Ask "Why can't I buy a second console?". Ask "My delivery arrived damaged" → **Request $15 goodwill credit** (held for approval). Open *Tune* next to "Picked for you", hide Electronics and favor Home & kitchen: her picks re-rank on the next sync. In the same screen change her drop-off instructions ("Gate code 4411") with *No signal* on: it is saved on the phone, and the next order she places carries it to the courier.
@@ -328,7 +328,7 @@ Bucket `delivery`, scope `dispatch`. Sync Gateway replicates the first seven col
 | `recommendations` | `recs::<customer>` | customer | personalization | Smart cart lines priced at the member tier with fulfillment-center on-hand, "for you" picks, price matches, "for you today" notes |
 | `orders` | `order::<customer>::<uuid>` | customer | **the phone** (create), worker (status) | Offline-first queue for every customer action. The sync function allows `requireUser(customer_id)`, `status: pending` and creation only |
 | `assistant` | `chat::<customer>` | customer | assistant | History + answers reusable offline (keyed by the question) |
-| `context_cache` | `ctx::<customer>::<intent>`, `ctx::<customer>::guide_<intent>` | customer | assistant | Phone copy of the **Context Cache** entry also held in AOM: KB chunks + tool facts, `export_date`, `customer_rev`, TTL 6h |
+| `context_cache` | `ctx::<customer>::<intent>`, `ctx::<customer>::guide_<intent>` | customer | assistant | Phone copy of the **Context Cache** entry also held in Couchbase Labs Agent Operations Manager: KB chunks + tool facts, `export_date`, `customer_rev`, TTL 6h |
 | `catalog` | `catalog::v1` | catalog | loader | Products, member tiers, multi-buy savings, delivery options, competitors, fulfillment centers, FAQ |
 | `inventory` | `inv::<fc>` | — | actions | On-hand units per SKU per fulfillment center (CAS updates). Server only |
 | `lookups` | `login::…`, `kbdoc::…`, `load_state` | — | loader | Login index, KB document ids, load status. Server only |
@@ -349,12 +349,12 @@ Backend variables go in `.env` (see `.env.example`); `docker-compose.yml` sets t
 | `RECS_WINDOW_DAYS` | `1` | Recommendations are pre-built for customers who opened the app this recently; everyone else gets theirs at sign-in |
 | `AOM_URL`, `AOM_AGENT_API_KEY` | — | Agent identity, written by `register_with_aom.py` |
 | `AOM_ADMIN_USERNAME`, `AOM_ADMIN_PASSWORD` | — | Used only to publish KB documents |
-| `AOM_LLM_PROVIDER`, `AOM_LLM_MODEL` | AOM default | Pin the model completions use |
+| `AOM_LLM_PROVIDER`, `AOM_LLM_MODEL` | Couchbase Labs Agent Operations Manager default | Pin the model completions use |
 | `KB_WINDOW_DAYS`, `KB_PROFILE_LIMIT` | `2`, `150` | Which customers get a KB profile each day (the demo customers always do) |
 | `CONTEXT_CACHE_TTL_SECONDS` | `21600` | Upper bound; the export date and customer rev invalidate it sooner |
-| `RAG_APP_ID` | `delivery-assistant` | AOM RAG Application id; `RAG_APP_ENABLED=false` skips it |
-| `LLM_NAMESPACE_CUSTOMER` / `_GUIDE` | `rag:delivery-assistant:customer` / `:guide` | Keep the `rag:<app_id>:` prefix so AOM attributes the activity to the app |
-| `CONTEXT_NAMESPACE` | `rag:delivery-assistant:customer-context` | AOM Context Cache namespace for customer context |
+| `RAG_APP_ID` | `delivery-assistant` | Couchbase Labs Agent Operations Manager RAG Application id; `RAG_APP_ENABLED=false` skips it |
+| `LLM_NAMESPACE_CUSTOMER` / `_GUIDE` | `rag:delivery-assistant:customer` / `:guide` | Keep the `rag:<app_id>:` prefix so Couchbase Labs Agent Operations Manager attributes the activity to the app |
+| `CONTEXT_NAMESPACE` | `rag:delivery-assistant:customer-context` | Couchbase Labs Agent Operations Manager Context Cache namespace for customer context |
 | `DBX_COST_PER_QUERY_USD` | `0.035` | Illustrative cost per warehouse / Model Serving call behind the story's "spend avoided" counter |
 | `DEMO_TODAY` | export's `export_date` | Keeps "about to run out" stable whenever you demo |
 | `SG_PUBLIC_URL` | — | Replication URL handed to phones |
@@ -370,7 +370,7 @@ cd backend && pytest -q          # 19 tests
 cd mobile && npm run typecheck
 ```
 
-`test_demo_flows.py` covers sign-in, what syncs to a customer's phone (their own profile, recommendations and home store, nobody else's), member pricing, the price-match order and its partial shipment, the price-match guardrails, the assistant's context cache (hit, guide path, live item lookup), backorders, Subscribe & Save, the purchase limit, preferences re-ranking the picks, returns and goodwill credits going to store credit, push authorization, the Databricks offload counters, and the delivery plan (Express time from the hub, the customer's window, drop-off instructions changed in preferences reaching the next order and the assistant). `test_aom_integration.py` runs the backend against `tests/fake_aom.py`, which has the same routes and shapes as AOM. It checks KB publishing, document-scoped retrieval, RAG application registration and its guide-only scope, customer context cached through AOM's Context Cache, the LLM cache shared across customers for guide questions but not personal ones, tool calls over real MCP, and the approval tier. `test_aom_bootstrap.py` starts the backend with `AOM_AUTO_REGISTER` against a *fresh* fake AOM and checks that it registers itself end to end.
+`test_demo_flows.py` covers sign-in, what syncs to a customer's phone (their own profile, recommendations and home store, nobody else's), member pricing, the price-match order and its partial shipment, the price-match guardrails, the assistant's context cache (hit, guide path, live item lookup), backorders, Subscribe & Save, the purchase limit, preferences re-ranking the picks, returns and goodwill credits going to store credit, push authorization, the Databricks offload counters, and the delivery plan (Express time from the hub, the customer's window, drop-off instructions changed in preferences reaching the next order and the assistant). `test_aom_integration.py` runs the backend against `tests/fake_aom.py`, which has the same routes and shapes as Couchbase Labs Agent Operations Manager. It checks KB publishing, document-scoped retrieval, RAG application registration and its guide-only scope, customer context cached through Couchbase Labs Agent Operations Manager's Context Cache, the LLM cache shared across customers for guide questions but not personal ones, tool calls over real MCP, and the approval tier. `test_aom_bootstrap.py` starts the backend with `AOM_AUTO_REGISTER` against a *fresh* fake Couchbase Labs Agent Operations Manager and checks that it registers itself end to end.
 
 ---
 
@@ -381,12 +381,12 @@ backend/            FastAPI API, MCP server, loader, worker, assistant (Python)
   app/catalog.py        products, household types, member tiers, fulfillment centers, regions, hubs, delivery windows, couriers (shared with the generator)
   app/personalization.py  the smart cart, picks and price matches per customer
   app/actions.py        order / price-match / subscription / return / preference business logic behind every tool
-  app/assistant.py      intent → AOM RAG app (guide) | AOM Context Cache → KB + memory + LLM cache (customer) → actions
-  app/rag_app.py        the assistant's AOM RAG Application definition, re-scoped daily
-  app/loader.py         daily export → Couchbase (customers, recommendations, hubs) + AOM Knowledge Base
-  app/worker.py         offline-first orders → AOM tools/invoke
+  app/assistant.py      intent → Couchbase Labs Agent Operations Manager RAG app (guide) | Couchbase Labs Agent Operations Manager Context Cache → KB + memory + LLM cache (customer) → actions
+  app/rag_app.py        the assistant's Couchbase Labs Agent Operations Manager RAG Application definition, re-scoped daily
+  app/loader.py         daily export → Couchbase (customers, recommendations, hubs) + Couchbase Labs Agent Operations Manager Knowledge Base
+  app/worker.py         offline-first orders → Couchbase Labs Agent Operations Manager tools/invoke
   app/metrics.py        story counters, including the Databricks offload
-  app/aom_bootstrap.py  self-registration with AOM (Kubernetes)
+  app/aom_bootstrap.py  self-registration with Couchbase Labs Agent Operations Manager (Kubernetes)
 mobile/             Expo app (Couchbase Lite engine + browser preview engine)
   src/theme.ts          the Couchbase palette
   src/pricing.ts        member pricing and cart totals on the phone
@@ -397,7 +397,7 @@ sync-gateway/       bootstrap + database config with per-collection sync functio
 scripts/            register_with_aom.py, setup-corporate-ca.sh
 web/                nginx image serving the browser build of the app over HTTPS on :5152, behind the sign-in page (proxies /api to the backend) and the story page
 helm/delivery-app/ Helm chart for the demo (Couchbase, Sync Gateway, backend, daily export CronJob, web)
-deploy/k8s/         deploy.sh + values for the K3s nodes (AOM and the demo)
+deploy/k8s/         deploy.sh + values for the K3s nodes (Couchbase Labs Agent Operations Manager and the demo)
 data/               the daily export drop folder
 ```
 
