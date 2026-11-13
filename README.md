@@ -13,10 +13,6 @@ The app's assistant is **registered with, and governed by, the Couchbase Agent O
 * LLM calls go through AOM's **LLM Caching** gateway
 * every order, price match, subscription, return, goodwill credit and preference change runs as an RBAC-checked, traced and audited AOM tool call, with human approval for price matches and goodwill credits
 
-The app has the look of couchbase.com - Couchbase red on white, near-black type and dark panels - and carries the Couchbase logo.
-
-Built on the framework of the [Couchbase ShopSmart demo](../couchbase-shopsmart-mobile-ai-personalization-demo) (same stack, same repository layout, same pricing engine and SKU numbering; a delivery service with hubs, couriers, windows and drop-off instructions in place of a retailer with stores), which is in turn based on the Staples field order capture demo and [Fujio-Turner/mobile_field_service](https://github.com/Fujio-Turner/mobile_field_service): Expo / React Native, Couchbase Lite via `cbl-reactnative`, Sync Gateway session auth, and offline-first writes that sync when the radio comes back.
-
 ---
 
 ## How the demo opens
