@@ -1,0 +1,34 @@
+{
+  "bucket": "delivery",
+  "scopes": {
+    "dispatch": {
+      "collections": {
+        "customers": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "hubs": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "recommendations": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "assistant": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "context_cache": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "catalog": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Written only by the backend (Couchbase SDK writes, imported by SG).\n  // Phones pull these; any attempt to push one is rejected.\n  requireAdmin();\n  if (doc._deleted) { if (oldDoc && oldDoc.channels) { channel(oldDoc.channels); } return; }\n  channel(doc.channels);\n}"
+        },
+        "orders": {
+          "sync": "function (doc, oldDoc, meta) {\n  // Offline-first orders and customer actions. A customer's phone may CREATE one, as itself,\n  // as 'pending'. Only the backend (admin / import) may advance its status.\n  if (doc._deleted) { requireAdmin(); if (oldDoc) { channel(\"customer:\" + oldDoc.customer_id); } return; }\n  if (!doc.customer_id) { throw({forbidden: \"customer_id is required\"}); }\n  if (oldDoc == null || oldDoc._deleted) {\n    requireUser(doc.customer_id);\n    if (doc.type !== \"request\") { throw({forbidden: \"type must be 'request'\"}); }\n    if (doc.status !== \"pending\") { throw({forbidden: \"new orders must be 'pending'\"}); }\n    if (doc._id.indexOf(\"order::\" + doc.customer_id + \"::\") !== 0) { throw({forbidden: \"id must be order::<customer_id>::<uuid>\"}); }\n  } else {\n    if (oldDoc.customer_id !== doc.customer_id) { throw({forbidden: \"customer_id is immutable\"}); }\n    requireAdmin();\n  }\n  channel(\"customer:\" + doc.customer_id);\n}"
+        }
+      }
+    }
+  },
+  "num_index_replicas": 0,
+  "enable_shared_bucket_access": true,
+  "import_docs": true,
+  "revs_limit": 50
+}
